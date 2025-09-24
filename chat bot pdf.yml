@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama:/root/.ollama
+    environment:
+      - OLLAMA_NUM_THREADS=20
+      - OLLAMA_MAX_LOADED_MODELS=1
+    networks:
+      - app-tire
+      
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: openwebui
+    restart: always
+    ports:
+      - "3000:8080"
+    volumes:
+      - ./openwebui:/app/backend/data
+      - ./documents:/app/backend/data/documents  # 📚 مسیر اسناد آموزشی
+    environment:
+      - OLLAMA_API_BASE=http://ollama:11434
+      - ENABLE_RAG_EMBEDDINGS=true  # فعال‌سازی جستجو در اسناد
+    depends_on:
+      - ollama
+    networks:
+      - app-tire
+      
+volumes:
+  ollama:
+
+networks:
+  app-tire:
+    driver: bridge
