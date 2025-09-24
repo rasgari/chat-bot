@@ -1,0 +1,71 @@
+services:
+
+ # ollama:
+   # image: ollama/ollama:latest
+   # container_name: ollama
+   # ports:
+   #   - "11434:11434"               
+   # volumes:
+   #   - ./chat-bot/ollama_data/models:/data
+   # restart: unless-stopped
+   # tty: true
+   # networks:
+   #  - app-tire
+
+  open-webui:
+    image: dyrnq/open-webui:latest
+    container_name: open-webui
+    depends_on:
+      - ollama
+    ports:
+      - "3000:8080"                
+    volumes:
+      - ./chat-bot/openwebui_data:/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434  
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  
+    restart: unless-stopped
+    networks:
+      - app-tire
+
+  llama3:
+    image: arcsurf/llama3:latest  
+    container_name: llama3_container
+    ports:
+      - "11435:11435"  
+    volumes:
+      - ./chat-bot/llama3_data:/data 
+    restart: unless-stopped
+    command: >
+      bash -c "
+      ollama pull llama3 &&
+      ollama serve --host 0.0.0.0"
+    networks:
+      - app-tire
+
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./chat-bot/portainer:/data
+    ports:
+      - 9000:9000
+    networks:
+      - app-tire
+
+volumes:
+  ollama_data:
+  openwebui_data:
+  portainer_data:
+  llama3_data:
+
+networks:
+  app-tire:
+    driver: bridge
